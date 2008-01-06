@@ -1,0 +1,50 @@
+ ------
+ Maven 2 JasperReports Plugin
+ ------
+
+Maven 2 JasperReports Plugin
+
+ This plug-in compiles {{{http://jasperreports.sourceforge.net/}JasperReports}} xml design files to Java source
+ and .jasper serialized files.
+
+* How to Use
+
+  In your pom.xml, insert this segment:
+
+-------------------
+<project>
+  ...
+    <build>
+      ...
+      <plugins>
+        ...
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>jasperreports-maven-plugin</artifactId>
+          <executions>
+            <execution>
+              <goals>
+                <goal>compile-reports</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        ...
+      </plugins>
+      ...
+    </build>
+  ...
+</project>
+-------------------
+
+  In some cases, you might need to bind the mojo to the compile phase (for instance
+  if your report uses classes from the artifact it is built with). To do so, add
+  <<< <phase>compile</phase> >>> in the <<< <execution> >>> element of the above sample.
+
+  By default, your xml design files should be in src/main/jasperreports and have a .jrxml
+  extension.
+
+* Available Configuration Options
+
+  You can refer to the {{{compile-reports-mojo.html}MOJO generated documentation}}
+  to discover the different configuration options.
