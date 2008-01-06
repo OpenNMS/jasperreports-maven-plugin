@@ -28,10 +28,6 @@
       <href>http://www.codehaus.org</href>
    </bannerRight>
    <body>
-      <links>
-         <item name="Mojo" href="http://mojo.codehaus.org"/>
-         <item name="Maven" href="http://maven.apache.org/maven2"/>
-      </links>
       <menu name="Overview">
          <item name="Introduction" href="index.html"/>
          <item name="Usage" href="usage.html"/>
