@@ -28,8 +28,8 @@ import java.io.File;
 
 /**
  * @author gjoseph
- * @author $Author: $ (last edit)
- * @version $Revision: $
+ * @author $Author$ (last edit)
+ * @version $Revision$
  */
 public class JasperReportsMojoTest
     extends TestCase
