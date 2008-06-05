@@ -34,6 +34,9 @@ import org.codehaus.plexus.compiler.util.scan.mapping.SuffixMapping;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -206,40 +209,55 @@ public class JasperReportsMojo
         throws MojoFailureException, MojoExecutionException
     {
         getLog().info( "Compiling " + files.size() + " report design files." );
-        Iterator it = files.iterator();
-        while ( it.hasNext() )
-        {
-            File src = (File) it.next();
-            String srcName = getPathRelativeToRoot( src );
-            try
-            {
-                // get the single destination file
-                File dest = (File) mapping.getTargetFiles( outputDirectory, srcName ).iterator().next();
 
-                File destFileParent = dest.getParentFile();
-                if ( !destFileParent.exists() )
+        getLog().debug( "Set classloader" );
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader( getClassLoader( classLoader ) );
+
+        try
+        {
+            Iterator it = files.iterator();
+            while ( it.hasNext() )
+            {
+                File src = (File) it.next();
+                String srcName = getPathRelativeToRoot( src );
+                try
                 {
-                    if ( destFileParent.mkdirs() )
+                    // get the single destination file
+                    File dest = (File) mapping.getTargetFiles( outputDirectory, srcName ).iterator().next();
+
+                    File destFileParent = dest.getParentFile();
+                    if ( !destFileParent.exists() )
                     {
-                        getLog().debug( "Created directory " + destFileParent );
+                        if ( destFileParent.mkdirs() )
+                        {
+                            getLog().debug( "Created directory " + destFileParent );
+                        }
+                        else
+                        {
+                            throw new MojoExecutionException( "Could not create directory " + destFileParent );
+                        }
                     }
-                    else
-                    {
-                        throw new MojoExecutionException( "Could not create directory " + destFileParent );
-                    }
+                    getLog().info( "Compiling report file: " + srcName );
+                    JasperCompileManager.compileReportToFile( src.getAbsolutePath(), dest.getAbsolutePath() );
                 }
-                getLog().info( "Compiling report file: " + srcName );
-                JasperCompileManager.compileReportToFile( src.getAbsolutePath(), dest.getAbsolutePath() );
+                catch ( JRException e )
+                {
+                    throw new MojoFailureException( this, "Error compiling report design : " + src,
+                                                    "Error compiling report design : " + src + " : " + e.getMessage() );
+                }
+                catch ( InclusionScanException e )
+                {
+                    throw new MojoFailureException( this, "Error compiling report design : " + src,
+                                                    "Error compiling report design : " + src + " : " + e.getMessage() );
+                }
             }
-            catch ( JRException e )
+        }
+        finally
+        {
+            if ( classLoader != null )
             {
-                throw new MojoFailureException( this, "Error compiling report design : " + src,
-                                                "Error compiling report design : " + src + " : " + e.getMessage() );
-            }
-            catch ( InclusionScanException e )
-            {
-                throw new MojoFailureException( this, "Error compiling report design : " + src,
-                                                "Error compiling report design : " + src + " : " + e.getMessage() );
+                Thread.currentThread().setContextClassLoader( classLoader );
             }
         }
         getLog().info( "Compiled " + files.size() + " report design files." );
@@ -249,7 +267,7 @@ public class JasperReportsMojo
      * Determines source files to be compiled, based on the SourceMapping.
      * No longer needs to be recursive, since the SourceInclusionScanner
      * handles that.
-     * 
+     *
      * @param mapping
      * @return
      * @throws MojoExecutionException
@@ -333,6 +351,52 @@ public class JasperReportsMojo
         {
             throw new MojoExecutionException( desc + " is not writable : " + dir );
         }
+    }
+
+    private ClassLoader getClassLoader( ClassLoader classLoader )
+        throws MojoExecutionException
+    {
+        List classpathURLs = new ArrayList();
+
+        for ( int i = 0; i < classpathElements.size(); i++ )
+        {
+            String element = (String) classpathElements.get( i );
+            try
+            {
+                File f = new File( element );
+                URL newURL = f.toURI().toURL();
+                classpathURLs.add( newURL );
+                getLog().debug( "Added to classpath " + element );
+            }
+            catch ( Exception e )
+            {
+                throw new MojoExecutionException( "Error parsing classparh " + element + " " + e.getMessage() );
+            }
+        }
+
+        if ( additionalClasspath != null && additionalClasspath.length() > 0 )
+        {
+            String[] elements = additionalClasspath.split( File.pathSeparator );
+            for ( int i = 0; i < elements.length; i++ )
+            {
+                String element = elements[i];
+                try
+                {
+                    File f = new File( element );
+                    URL newURL = f.toURI().toURL();
+                    classpathURLs.add( newURL );
+                    getLog().debug( "Added to classpath " + element );
+                }
+                catch ( Exception e )
+                {
+                    throw new MojoExecutionException( "Error parsing classpath " + additionalClasspath + " "
+                        + e.getMessage() );
+                }
+            }
+        }
+
+        URL[] urls = (URL[]) classpathURLs.toArray( new URL[classpathURLs.size()] );
+        return new URLClassLoader( urls, classLoader );
     }
 
 }
