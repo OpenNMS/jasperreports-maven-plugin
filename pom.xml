@@ -3,9 +3,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <artifactId>mojo</artifactId>
+    <artifactId>mojo-parent</artifactId>
     <groupId>org.codehaus.mojo</groupId>
-    <version>16</version>
+    <version>18</version>
   </parent>
 
   <groupId>org.codehaus.mojo</groupId>
@@ -40,6 +40,42 @@
       <groupId>jasperreports</groupId>
       <artifactId>jasperreports</artifactId>
       <version>1.2.0</version>
+      <exclusions>
+        <!-- user should have another version of jasperreport in the classpath -->
+        <!-- this also prevent maven from look for new versions due version range specified in jasperreports' pom-->
+        <exclusion>
+          <groupId>commons-beanutils</groupId>
+          <artifactId>commons-beanutils</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>commons-collections</groupId>
+          <artifactId>commons-collections</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>commons-digester</groupId>
+          <artifactId>commons-digester</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>itext</groupId>
+          <artifactId>itext</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>jfree</groupId>
+          <artifactId>jcommon</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>jfree</groupId>
+          <artifactId>jfreechart</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>eclipse</groupId>
+          <artifactId>jdtcore</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
