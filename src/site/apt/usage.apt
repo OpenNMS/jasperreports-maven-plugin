@@ -15,14 +15,6 @@ Maven 2 JasperReports Plugin
 <project>
   ...
   
-    <dependencies>
-      <dependency>
-        <groupId>jasperreports</groupId>
-        <artifactId>jasperreports</artifactId>
-        <version>${your.jasperreports.version}</version>
-      </dependency>
-    </dependencies>
-    
     <build>
       ...
       <plugins>
@@ -37,6 +29,13 @@ Maven 2 JasperReports Plugin
               </goals>
             </execution>
           </executions>
+          <dependencies>
+            <dependency>
+              <groupId>jasperreports</groupId>
+              <artifactId>jasperreports</artifactId>
+              <version>${your.jasperreports.version}</version>
+            </dependency>
+          </dependencies>
         </plugin>
         ...
       </plugins>
