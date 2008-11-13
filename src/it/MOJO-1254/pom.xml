@@ -25,6 +25,7 @@
             </goals>
           </execution>
         </executions>
+        <!-- this is a work around to make sure the plugin uses the correct xml validation, ie dtd -->
         <dependencies>
           <dependency>
             <groupId>jasperreports</groupId>
