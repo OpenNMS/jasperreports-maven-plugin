@@ -15,9 +15,21 @@ package org.codehaus.mojo.jasperreports;
  * the License.
  */
 
-import net.sf.jasperreports.engine.JasperCompileManager;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.util.JRProperties;
+
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -27,15 +39,6 @@ import org.codehaus.plexus.compiler.util.scan.SourceInclusionScanner;
 import org.codehaus.plexus.compiler.util.scan.StaleSourceScanner;
 import org.codehaus.plexus.compiler.util.scan.mapping.SourceMapping;
 import org.codehaus.plexus.compiler.util.scan.mapping.SuffixMapping;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Compiles JasperReports xml definition files.
@@ -135,6 +138,14 @@ public class JasperReportsMojo
      * @parameter expression="${project.compileClasspathElements}"
      */
     private List classpathElements;
+    
+    
+    /**
+     * Additional JRProperties
+     * @parameter 
+     * @since 1.0-beta-2
+     */
+    private Map additionalProperties = new HashMap();
 
     /**
      * Any additional classpath entry you might want to add to the JasperReports compiler. Not
@@ -204,6 +215,14 @@ public class JasperReportsMojo
             JRProperties.setProperty( JRProperties.COMPILER_CLASS, compiler );
             JRProperties.setProperty( JRProperties.COMPILER_XML_VALIDATION, xmlValidation );
 
+            for ( Iterator i = additionalProperties.keySet().iterator(); i.hasNext(); )
+            {
+                String key = (String) i.next();
+                String value = (String) additionalProperties.get( key );
+                JRProperties.setProperty( key, value );
+                getLog().debug( "Added property: " + key + ":" + value );
+            }
+            
             Iterator it = files.iterator();
             while ( it.hasNext() )
             {
@@ -355,7 +374,7 @@ public class JasperReportsMojo
                 File f = new File( element );
                 URL newURL = f.toURI().toURL();
                 classpathURLs.add( newURL );
-                getLog().info( "Added to classpath " + element );
+                getLog().debug( "Added to classpath " + element );
             }
             catch ( Exception e )
             {
@@ -374,7 +393,7 @@ public class JasperReportsMojo
                     File f = new File( element );
                     URL newURL = f.toURI().toURL();
                     classpathURLs.add( newURL );
-                    getLog().info( "Added to classpath " + element );
+                    getLog().debug( "Added to classpath " + element );
                 }
                 catch ( Exception e )
                 {
