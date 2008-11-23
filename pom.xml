@@ -13,6 +13,8 @@
   <artifactId>jasperreports-maven-plugin</artifactId>
   <version>1.0-beta-2-SNAPSHOT</version>
 
+  <packaging>maven-plugin</packaging>
+
   <name>Maven JasperReports Plugin</name>
   <description>Compile Jasper report design file</description>
   <url>http://mojo.codehaus.org/jasperreports-maven-plugin</url>
@@ -25,7 +27,12 @@
     </license>
   </licenses>
 
-  <packaging>maven-plugin</packaging>
+  <scm>
+    <connection>scm:svn:http://svn.codehaus.org/mojo/trunk/mojo/jasperreports-maven-plugin</connection>
+    <developerConnection>scm:svn:https://svn.codehaus.org/mojo/trunk/mojo/jasperreports-maven-plugin</developerConnection>
+    <url>http://svn.codehaus.org/mojo/trunk/mojo/jasperreports-maven-plugin</url>
+  </scm>
+
 
   <developers>
     <developer>

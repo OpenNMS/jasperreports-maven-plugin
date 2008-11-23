@@ -36,7 +36,6 @@
       <menu name="Overview">
          <item name="example" href="examples/example-1.html"/>
       </menu>
-      ${reports}
    </body>
 </project>
 
