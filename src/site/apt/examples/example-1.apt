@@ -9,7 +9,6 @@ Examples
 
   The following build configuration shows how to compile all jrxml files using jasperreports-2.0.5 at default location 
   (ie src/main/jasperreports ), and place the output files under target/jasper directory to be picked up by maven as a resource directory.
-  It also how upgrade <itext> at runtime.
 
 -------------------
 
@@ -18,15 +17,6 @@ Examples
       <groupId>jasperreports</groupId>
       <artifactId>jasperreports</artifactId>
       <version>2.0.5</version>
-      <exclusions>
-         <groupId>com.lowagie</groupId>
-         <artifactId>itext</artifactId>
-      </exclusion>
-    </dependency>
-    <dependency>
-      <groupId>com.lowagie</groupId>
-      <artifactId>itext</artifactId>
-      <version>2.1</version>
     </dependency>
   </dependencies>
 
