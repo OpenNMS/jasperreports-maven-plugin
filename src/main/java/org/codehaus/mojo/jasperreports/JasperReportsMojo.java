@@ -30,10 +30,16 @@ import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.util.JRProperties;
 
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.toolchain.Toolchain;
+import org.apache.maven.toolchain.ToolchainManager;
+import org.codehaus.plexus.compiler.Compiler;
+import org.codehaus.plexus.compiler.manager.CompilerManager;
+import org.codehaus.plexus.compiler.manager.NoSuchCompilerException;
 import org.codehaus.plexus.compiler.util.scan.InclusionScanException;
 import org.codehaus.plexus.compiler.util.scan.SourceInclusionScanner;
 import org.codehaus.plexus.compiler.util.scan.StaleSourceScanner;
@@ -60,6 +66,16 @@ public class JasperReportsMojo
      * @parameter expression="${project}
      */
     private MavenProject project;
+    
+    /**
+     * The current build session instance. This is used for
+     * toolchain manager API calls.
+     *
+     * @parameter default-value="${session}"
+     * @required
+     * @readonly
+     */
+    private MavenSession session;
 
     /**
      * This is where the generated java sources are stored.
@@ -130,7 +146,7 @@ public class JasperReportsMojo
      * Uses the Javac compiler by default. This is different from the original JasperReports ant
      * task, which uses the JDT compiler by default.
      * 
-     * @parameter default-value="net.sf.jasperreports.engine.design.JRJavacCompiler"
+     * @parameter default-value="org.codehaus.mojo.jasperreports.MavenJavacCompiler"
      */
     private String compiler;
 
@@ -154,6 +170,44 @@ public class JasperReportsMojo
      * @parameter
      */
     private String additionalClasspath;
+
+    /**
+     * Plexus compiler manager.
+     *
+     * @component
+     */
+    private CompilerManager compilerManager;
+    
+    /** @component */
+    private ToolchainManager toolchainManager;
+    
+    /**
+     * The -source argument for the Java compiler.
+     *
+     * @parameter expression="${maven.compiler.source}" default-value="1.5"
+     */
+    protected String source;
+
+    /**
+     * The -target argument for the Java compiler.
+     *
+     * @parameter expression="${maven.compiler.target}" default-value="1.5"
+     */
+    protected String target;
+
+    /**
+     * The -encoding argument for the Java compiler.
+     *
+     * @parameter expression="${encoding}" default-value="${project.build.sourceEncoding}"
+     */
+    private String encoding;
+
+    /**
+     * Set to true to include debugging information in the compiled class files.
+     *
+     * @parameter expression="${maven.compiler.debug}" default-value="true"
+     */
+    private boolean debug = true;
 
     public void execute()
         throws MojoExecutionException, MojoFailureException
@@ -201,10 +255,6 @@ public class JasperReportsMojo
 
         getLog().info( "Compiling " + files.size() + " report design files." );
 
-        getLog().debug( "Set classloader" );
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader( getClassLoader( classLoader ) );
-
         JRProperties.backupProperties();
 
         try
@@ -214,6 +264,23 @@ public class JasperReportsMojo
             JRProperties.setProperty( JRProperties.COMPILER_KEEP_JAVA_FILE, keepJava );
             JRProperties.setProperty( JRProperties.COMPILER_CLASS, compiler );
             JRProperties.setProperty( JRProperties.COMPILER_XML_VALIDATION, xmlValidation );
+            
+            Compiler compilerMaven;
+            
+            String compilerId = "javac";
+
+            getLog().debug( "Using compiler '" + compilerId + "'." );
+
+            try
+            {
+                compilerMaven = compilerManager.getCompiler( compilerId );
+            }
+            catch ( NoSuchCompilerException e )
+            {
+                throw new MojoExecutionException( "No such compiler '" + e.getCompilerId() + "'." );
+            }
+            
+            MavenJavacCompiler.init(getLog(), compilerMaven, debug, encoding, getToolchain(), source, target);
 
             for ( Iterator i = additionalProperties.keySet().iterator(); i.hasNext(); )
             {
@@ -250,24 +317,17 @@ public class JasperReportsMojo
                 }
                 catch ( JRException e )
                 {
-                    throw new MojoFailureException( this, "Error compiling report design : " + src,
-                                                    "Error compiling report design : " + src + " : " + e.getMessage() );
+                    throw new MojoExecutionException( "Error compiling report design : " + src, e );
                 }
                 catch ( InclusionScanException e )
                 {
-                    throw new MojoFailureException( this, "Error compiling report design : " + src,
-                                                    "Error compiling report design : " + src + " : " + e.getMessage() );
+                    throw new MojoExecutionException( "Error compiling report design : " + src, e );
                 }
             }
         }
         finally
         {
             JRProperties.restoreProperties();
-
-            if ( classLoader != null )
-            {
-                Thread.currentThread().setContextClassLoader( classLoader );
-            }
         }
         getLog().info( "Compiled " + files.size() + " report design files." );
     }
@@ -405,6 +465,18 @@ public class JasperReportsMojo
 
         URL[] urls = (URL[]) classpathURLs.toArray( new URL[classpathURLs.size()] );
         return new URLClassLoader( urls, classLoader );
+    }
+    
+    //TODO remove the part with ToolchainManager lookup once we depend on
+    //3.0.9 (have it as prerequisite). Define as regular component field then.
+    private Toolchain getToolchain()
+    {
+        Toolchain tc = null;
+        if ( toolchainManager != null )
+        {
+            tc = toolchainManager.getToolchainFromBuildContext( "jdk", session );
+        }
+        return tc;
     }
 
 }
