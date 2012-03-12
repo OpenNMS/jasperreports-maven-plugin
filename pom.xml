@@ -6,7 +6,7 @@
   <parent>
     <artifactId>mojo-parent</artifactId>
     <groupId>org.codehaus.mojo</groupId>
-    <version>24</version>
+    <version>29</version>
   </parent>
 
   <groupId>org.codehaus.mojo</groupId>
@@ -127,7 +127,7 @@
 
   <properties>
     <maven.api.version>2.2.1</maven.api.version>
-    <project.build.java.target>1.5</project.build.java.target>
+    <mojo.java.target>1.5</mojo.java.target>
   </properties>
 
 </project>
