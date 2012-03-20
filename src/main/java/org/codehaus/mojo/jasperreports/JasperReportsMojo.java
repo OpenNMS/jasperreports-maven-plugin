@@ -332,6 +332,9 @@ public class JasperReportsMojo
         finally
         {
             JRProperties.restoreProperties();
+            if ( classLoader != null ) {
+                Thread.currentThread().setContextClassLoader( classLoader );
+            }
         }
         getLog().info( "Compiled " + files.size() + " report design files." );
     }
