@@ -255,6 +255,10 @@ public class JasperReportsMojo
 
         getLog().info( "Compiling " + files.size() + " report design files." );
 
+        getLog().debug( "Set classloader" );
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader( getClassLoader( classLoader ) );
+
         JRProperties.backupProperties();
 
         try
