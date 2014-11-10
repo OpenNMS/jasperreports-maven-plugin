@@ -127,7 +127,7 @@
 
   <properties>
     <maven.api.version>2.2.1</maven.api.version>
-    <mojo.java.target>1.5</mojo.java.target>
+    <mojo.java.target>1.6</mojo.java.target>
   </properties>
 
 </project>
