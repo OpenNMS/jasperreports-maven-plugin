@@ -400,10 +400,10 @@ public class JasperReportsMojo
     /**
      * Determines source files to be compiled, based on the SourceMapping. No longer needs to be
      * recursive, since the SourceInclusionScanner handles that.
-     * 
+     *
      * @param mapping
      * @return
-     * @throws MojoExecutionException
+     * @throws org.apache.maven.plugin.MojoExecutionException
      */
     protected Set scanSrcDir( SourceMapping mapping )
         throws MojoExecutionException

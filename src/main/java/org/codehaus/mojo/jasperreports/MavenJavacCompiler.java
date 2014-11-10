@@ -7,7 +7,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import net.sf.jasperreports.engine.DefaultJasperReportsContext;
 import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperReportsContext;
 import net.sf.jasperreports.engine.design.JRAbstractMultiClassCompiler;
 
 import org.apache.maven.plugin.logging.Log;
@@ -59,10 +61,31 @@ public class MavenJavacCompiler extends JRAbstractMultiClassCompiler
         MavenJavacCompiler.sourceVersion = sourceVersion;
         MavenJavacCompiler.targetVersion = targetVersion;
     }
-	/**
-	 *
-	 */
-	public String compileClasses(File[] sourceFiles, String classpath) throws JRException 
+
+    /**
+     * NMS-5182: The JasperReports API changed. It requires a constructor with a JasperReportContext.
+     * This was added to use reports compiled by {@link org.codehaus.mojo.jasperreports.MavenJavacCompiler}
+     * during runtime with JasperReports Library.
+     * @param jasperReportsContext The context to be used
+     */
+    public MavenJavacCompiler(JasperReportsContext jasperReportsContext)
+    {
+        super(jasperReportsContext);
+    }
+
+    /**
+     * This is due to backwards compatibility reasons.
+     *
+     * @deprecated Replaced by {@link #MavenJavacCompiler(JasperReportsContext)}.
+     */
+    public MavenJavacCompiler()
+    {
+        this(DefaultJasperReportsContext.getInstance());
+    }
+
+
+    @Override
+	public String compileClasses(File[] sourceFiles, String classpath) throws JRException
 	{
 	 // ----------------------------------------------------------------------
         // Look up the compiler. This is done before other code than can
