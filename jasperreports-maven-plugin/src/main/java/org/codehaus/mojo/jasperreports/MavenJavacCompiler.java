@@ -75,7 +75,7 @@ public class MavenJavacCompiler extends JRAbstractMultiClassCompiler
         Toolchain tc = getToolchain();
         if ( tc != null ) 
         {
-            getLog().info( "Toolchain in jasperreports-maven-plugin: " + tc );
+            getLog().info( "Toolchain in compiler-plugin: " + tc );
             if ( executable  != null ) 
             { 
                 getLog().warn( "Toolchains are ignored, 'executable' parameter is set to " + executable );

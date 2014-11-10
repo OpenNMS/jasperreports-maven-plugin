@@ -15,11 +15,19 @@ package org.codehaus.mojo.jasperreports;
  * the License.
  */
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -316,8 +324,40 @@ public class JasperReportsMojo
                             throw new MojoExecutionException( "Could not create directory " + destFileParent );
                         }
                     }
+
+                    final File targetdir = new File(project.getBasedir(), "target");
+                    final File md5dir = new File(targetdir, "jaspermd5");
+
+                    final File md5File = new File(md5dir, srcName + ".md5");
+                    if (dest.exists() && md5File.exists()) {
+                        getLog().debug("destination exists, md5 file exists");
+                        try {
+                            final String srcMd5String = getFileMd5(src);
+
+                            final BufferedReader br = new BufferedReader(new FileReader(md5File));
+                            final String fileMd5 = br.readLine();
+
+                            if (srcMd5String.equals(fileMd5)) {
+                                getLog().info("Skipping report file: " + src + " (MD5 matches)");
+                                continue;
+                            }
+                        } catch (final Exception e) {
+                            getLog().warn("unable to read from " + src, e);
+                        }
+                    }
                     getLog().info( "Compiling report file: " + srcName );
                     JasperCompileManager.compileReportToFile( src.getAbsolutePath(), dest.getAbsolutePath() );
+
+                    try {
+                        final String destMd5 = getFileMd5(src);
+                        md5File.getParentFile().mkdirs();
+                        final FileWriter fr = new FileWriter(md5File);
+                        fr.write(destMd5);
+                        fr.write("\n");
+                        fr.close();
+                    } catch (final Exception e) {
+                        getLog().warn("unable to MD5 " + dest + ": " + e.getLocalizedMessage());
+                    }
                 }
                 catch ( JRException e )
                 {
@@ -339,13 +379,31 @@ public class JasperReportsMojo
         getLog().info( "Compiled " + files.size() + " report design files." );
     }
 
+	private String getFileMd5(File src) throws NoSuchAlgorithmException,
+			FileNotFoundException, IOException {
+		final MessageDigest md = MessageDigest.getInstance("MD5");
+		final FileInputStream sourceIs = new FileInputStream(src);
+		byte[] dataBytes = new byte[1024];
+		int nread;
+		while ((nread = sourceIs.read(dataBytes)) != -1) {
+		  md.update(dataBytes, 0, nread);
+		};
+		final byte[] mdbytes = md.digest();
+		final StringBuffer srcMd5 = new StringBuffer();
+		for (int i = 0; i < mdbytes.length; i++) {
+		  srcMd5.append(Integer.toString((mdbytes[i] & 0xff) + 0x100, 16).substring(1));
+		}
+		final String srcMd5String = srcMd5.toString();
+		return srcMd5String;
+	}
+
     /**
      * Determines source files to be compiled, based on the SourceMapping. No longer needs to be
      * recursive, since the SourceInclusionScanner handles that.
-     * 
+     *
      * @param mapping
      * @return
-     * @throws MojoExecutionException
+     * @throws org.apache.maven.plugin.MojoExecutionException
      */
     protected Set scanSrcDir( SourceMapping mapping )
         throws MojoExecutionException
