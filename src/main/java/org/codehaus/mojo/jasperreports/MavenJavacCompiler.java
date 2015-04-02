@@ -138,6 +138,8 @@ public class MavenJavacCompiler extends JRAbstractMultiClassCompiler
 
         compilerConfiguration.setDebug( debug );
 
+        compilerConfiguration.setMaxmem( "1280m" );
+
         compilerConfiguration.setSourceEncoding( encoding );
         
         compilerConfiguration.setSourceVersion( sourceVersion );
