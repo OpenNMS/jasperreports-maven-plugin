@@ -27,16 +27,11 @@ import java.net.URLClassLoader;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JasperCompileManager;
-import net.sf.jasperreports.engine.util.JRProperties;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -53,6 +48,12 @@ import org.codehaus.plexus.compiler.util.scan.SourceInclusionScanner;
 import org.codehaus.plexus.compiler.util.scan.StaleSourceScanner;
 import org.codehaus.plexus.compiler.util.scan.mapping.SourceMapping;
 import org.codehaus.plexus.compiler.util.scan.mapping.SuffixMapping;
+
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperReportsContext;
+import net.sf.jasperreports.engine.SimpleJasperReportsContext;
+import net.sf.jasperreports.engine.design.JRCompiler;
 
 /**
  * Compiles JasperReports xml definition files.
@@ -141,6 +142,7 @@ public class JasperReportsMojo
      * @parameter default-value="true"
      * @deprecated Not implemented
      */
+    @SuppressWarnings("unused")
     private boolean keepSerializedObject;
 
     /**
@@ -161,15 +163,14 @@ public class JasperReportsMojo
     /**
      * @parameter expression="${project.compileClasspathElements}"
      */
-    private List classpathElements;
-    
-    
+    private List<String> classpathElements;
+
     /**
      * Additional JRProperties
      * @parameter 
      * @since 1.0-beta-2
      */
-    private Map additionalProperties = new HashMap();
+    private Map<String,String> additionalProperties = new HashMap<>();
 
     /**
      * Any additional classpath entry you might want to add to the JasperReports compiler. Not
@@ -238,7 +239,7 @@ public class JasperReportsMojo
 
         SourceMapping mapping = new SuffixMapping( sourceFileExt, outputFileExt );
 
-        Set staleSources = scanSrcDir( mapping );
+        Set<File> staleSources = scanSrcDir( mapping );
         if ( staleSources.isEmpty() )
         {
             getLog().info( "Nothing to compile - all Jasper reports are up to date" );
@@ -255,7 +256,7 @@ public class JasperReportsMojo
         }
     }
 
-    protected void compile( Set files, SourceMapping mapping )
+    protected void compile( Set<File> files, SourceMapping mapping )
         throws MojoFailureException, MojoExecutionException
     {
         String classpath = buildClasspathString( classpathElements, additionalClasspath );
@@ -267,16 +268,15 @@ public class JasperReportsMojo
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader( getClassLoader( classLoader ) );
 
-        JRProperties.backupProperties();
-
         try
         {
-            JRProperties.setProperty( JRProperties.COMPILER_CLASSPATH, classpath );
-            JRProperties.setProperty( JRProperties.COMPILER_TEMP_DIR, javaDirectory.getAbsolutePath() );
-            JRProperties.setProperty( JRProperties.COMPILER_KEEP_JAVA_FILE, keepJava );
-            JRProperties.setProperty( JRProperties.COMPILER_CLASS, compiler );
-            JRProperties.setProperty( JRProperties.COMPILER_XML_VALIDATION, xmlValidation );
-            
+            JasperReportsContext reportsContext = new SimpleJasperReportsContext();
+            reportsContext.setProperty( JRCompiler.COMPILER_CLASSPATH, classpath );
+            reportsContext.setProperty( JRCompiler.COMPILER_TEMP_DIR, javaDirectory.getAbsolutePath() );
+            reportsContext.setProperty( JRCompiler.COMPILER_KEEP_JAVA_FILE, Boolean.toString(keepJava) );
+            reportsContext.setProperty( JRCompiler.COMPILER_PREFIX, compiler );
+            JasperCompileManager jasperCompilerManager = JasperCompileManager.getInstance(reportsContext);
+
             Compiler compilerMaven;
             
             String compilerId = "javac";
@@ -294,15 +294,15 @@ public class JasperReportsMojo
             
             MavenJavacCompiler.init(getLog(), compilerMaven, debug, encoding, getToolchain(), source, target);
 
-            for ( Iterator i = additionalProperties.keySet().iterator(); i.hasNext(); )
+            for ( Iterator<String> i = additionalProperties.keySet().iterator(); i.hasNext(); )
             {
-                String key = (String) i.next();
-                String value = (String) additionalProperties.get( key );
-                JRProperties.setProperty( key, value );
+                String key = i.next();
+                String value = additionalProperties.get( key );
+                //JRProperties.setProperty( key, value );
                 getLog().debug( "Added property: " + key + ":" + value );
             }
-            
-            Iterator it = files.iterator();
+
+            Iterator<File> it = files.iterator();
             while ( it.hasNext() )
             {
                 File src = (File) it.next();
@@ -334,19 +334,20 @@ public class JasperReportsMojo
                     	try {
                             final String srcMd5String = getFileMd5(src);
 
-					        final BufferedReader br = new BufferedReader(new FileReader(md5File));
-					        final String fileMd5 = br.readLine();
-					        
-							if (srcMd5String.equals(fileMd5)) {
-					        	getLog().info("Skipping report file: " + src + " (MD5 matches)");
-					        	continue;
+					        try(final BufferedReader br = new BufferedReader(new FileReader(md5File))) {
+	                            final String fileMd5 = br.readLine();
+
+	                            if (srcMd5String.equals(fileMd5)) {
+	                                getLog().info("Skipping report file: " + src + " (MD5 matches)");
+	                                continue;
+	                            }
 					        }
 						} catch (final Exception e) {
 							getLog().warn("unable to read from " + src, e);
 						}
                     }
                     getLog().info( "Compiling report file: " + srcName );
-                    JasperCompileManager.compileReportToFile( src.getAbsolutePath(), dest.getAbsolutePath() );
+                    jasperCompilerManager.compileToFile( src.getAbsolutePath(), dest.getAbsolutePath() );
                     
                     try {
 						final String destMd5 = getFileMd5(src);
@@ -371,7 +372,6 @@ public class JasperReportsMojo
         }
         finally
         {
-            JRProperties.restoreProperties();
             if ( classLoader != null ) {
                 Thread.currentThread().setContextClassLoader( classLoader );
             }
@@ -382,12 +382,13 @@ public class JasperReportsMojo
 	private String getFileMd5(File src) throws NoSuchAlgorithmException,
 			FileNotFoundException, IOException {
 		final MessageDigest md = MessageDigest.getInstance("MD5");
-		final FileInputStream sourceIs = new FileInputStream(src);
-		byte[] dataBytes = new byte[1024];
-		int nread = 0; 
-		while ((nread = sourceIs.read(dataBytes)) != -1) {
-		  md.update(dataBytes, 0, nread);
-		};
+		try(final FileInputStream sourceIs = new FileInputStream(src)) {
+	        byte[] dataBytes = new byte[1024];
+	        int nread = 0;
+	        while ((nread = sourceIs.read(dataBytes)) != -1) {
+	          md.update(dataBytes, 0, nread);
+	        };
+		}
 		final byte[] mdbytes = md.digest();
 		final StringBuffer srcMd5 = new StringBuffer();
 		for (int i = 0; i < mdbytes.length; i++) {
@@ -405,7 +406,7 @@ public class JasperReportsMojo
      * @return
      * @throws org.apache.maven.plugin.MojoExecutionException
      */
-    protected Set scanSrcDir( SourceMapping mapping )
+    protected Set<File> scanSrcDir( SourceMapping mapping )
         throws MojoExecutionException
     {
         final int staleMillis = 0;
@@ -443,13 +444,13 @@ public class JasperReportsMojo
         }
     }
 
-    protected String buildClasspathString( List classpathElements, String additionalClasspath )
+    protected String buildClasspathString( List<String> classpathElements, String additionalClasspath )
     {
         StringBuffer classpath = new StringBuffer();
-        Iterator it = classpathElements.iterator();
+        Iterator<String> it = classpathElements.iterator();
         while ( it.hasNext() )
         {
-            String cpElement = (String) it.next();
+            String cpElement = it.next();
             classpath.append( cpElement );
             if ( it.hasNext() )
             {
@@ -489,7 +490,7 @@ public class JasperReportsMojo
     private ClassLoader getClassLoader( ClassLoader classLoader )
         throws MojoExecutionException
     {
-        List classpathURLs = new ArrayList();
+        List<URL> classpathURLs = new ArrayList<>();
 
         for ( int i = 0; i < classpathElements.size(); i++ )
         {

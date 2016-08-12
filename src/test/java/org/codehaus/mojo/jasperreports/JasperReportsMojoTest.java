@@ -36,7 +36,7 @@ public class JasperReportsMojoTest
 {
     public void testClasspathBuildingAddsStuffIfNeeded()
     {
-        List fakeElements = Arrays.asList( new String[]{"foo", "bar", "baz"} );
+        List<String> fakeElements = Arrays.asList( new String[]{"foo", "bar", "baz"} );
         JasperReportsMojo mojo = new JasperReportsMojo();
         assertEquals( "foo" + File.pathSeparator + "bar" + File.pathSeparator + "baz",
                 mojo.buildClasspathString( fakeElements, null ) );
@@ -47,8 +47,8 @@ public class JasperReportsMojoTest
     public void testClasspathBuildingWorksWithEmptyList()
     {
         JasperReportsMojo mojo = new JasperReportsMojo();
-        assertEquals( "", mojo.buildClasspathString( Collections.EMPTY_LIST, null ) );
-        assertEquals( "plop", mojo.buildClasspathString( Collections.EMPTY_LIST, "plop" ) );
+        assertEquals( "", mojo.buildClasspathString( Collections.emptyList(), null ) );
+        assertEquals( "plop", mojo.buildClasspathString( Collections.emptyList(), "plop" ) );
     }
 
     public void testClasspathBuildingWorksWithSingletonList()

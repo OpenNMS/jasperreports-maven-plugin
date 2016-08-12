@@ -16,8 +16,9 @@ import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.toolchain.Toolchain;
 import org.codehaus.plexus.compiler.Compiler;
 import org.codehaus.plexus.compiler.CompilerConfiguration;
-import org.codehaus.plexus.compiler.CompilerError;
 import org.codehaus.plexus.compiler.CompilerException;
+import org.codehaus.plexus.compiler.CompilerMessage;
+import org.codehaus.plexus.compiler.CompilerResult;
 import org.codehaus.plexus.util.ReaderFactory;
 import org.codehaus.plexus.util.StringUtils;
 
@@ -199,11 +200,12 @@ public class MavenJavacCompiler extends JRAbstractMultiClassCompiler
                                + ", i.e. build is platform dependent!" );
         }
 
-        List<CompilerError> messages;
+        List<CompilerMessage> messages;
 
         try
         {
-            messages = compiler.compile( compilerConfiguration );
+            CompilerResult result = compiler.performCompile( compilerConfiguration );
+            messages = result.getCompilerMessages();
         }
         catch ( Exception e )
         {
@@ -211,11 +213,11 @@ public class MavenJavacCompiler extends JRAbstractMultiClassCompiler
             throw new JRException( "Fatal error compiling", e );
         }
 
-        List<CompilerError> warnings = new ArrayList<CompilerError>();
-        List<CompilerError> errors = new ArrayList<CompilerError>();
+        List<CompilerMessage> warnings = new ArrayList<CompilerMessage>();
+        List<CompilerMessage> errors = new ArrayList<CompilerMessage>();
         if ( messages != null )
         {
-            for ( CompilerError message : messages )
+            for ( CompilerMessage message : messages )
             {
                 if ( message.isError() )
                 {
@@ -235,19 +237,19 @@ public class MavenJavacCompiler extends JRAbstractMultiClassCompiler
                 getLog().info( "-------------------------------------------------------------" );
                 getLog().warn( "COMPILATION WARNING : " );
                 getLog().info( "-------------------------------------------------------------" );
-                for ( CompilerError warning : warnings )
+                for ( CompilerMessage warning : warnings )
                 {
                     getLog().warn( warning.toString() );
                 }
                 getLog().info( warnings.size() + ( ( warnings.size() > 1 ) ? " warnings " : "warning" ) );
                 getLog().info( "-------------------------------------------------------------" );
             }
-            
+
             getLog().info( "-------------------------------------------------------------" );
             getLog().error( "COMPILATION ERROR : " );
             getLog().info( "-------------------------------------------------------------" );
             
-            for ( CompilerError error : errors )
+            for ( CompilerMessage error : errors )
             {
                     getLog().error( error.toString() );
             }
@@ -258,7 +260,7 @@ public class MavenJavacCompiler extends JRAbstractMultiClassCompiler
         }
         else
         {
-            for ( CompilerError message : messages )
+            for ( CompilerMessage message : messages )
             {
                 getLog().warn( message.toString() );
             }
