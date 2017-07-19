@@ -13,7 +13,6 @@ import net.sf.jasperreports.engine.JasperReportsContext;
 import net.sf.jasperreports.engine.design.JRAbstractMultiClassCompiler;
 
 import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.toolchain.Toolchain;
 import org.codehaus.plexus.compiler.Compiler;
 import org.codehaus.plexus.compiler.CompilerConfiguration;
 import org.codehaus.plexus.compiler.CompilerException;
@@ -35,7 +34,7 @@ public class MavenJavacCompiler extends JRAbstractMultiClassCompiler
     
     private static Compiler compiler;
     
-    private static Toolchain tc;
+    private static String executable;
     
     private static boolean debug;
     
@@ -47,18 +46,16 @@ public class MavenJavacCompiler extends JRAbstractMultiClassCompiler
     
     private boolean fork = false;
     
-    private String executable = null;
-    
     public static Log getLog() {
         return log;
     }
     
-    public static void init(Log log, Compiler compiler, boolean debug, String encoding, Toolchain tc, String sourceVersion, String targetVersion) {
+    public static void init(Log log, Compiler compiler, boolean debug, String encoding, String executable, String sourceVersion, String targetVersion) {
         MavenJavacCompiler.log = log;
         MavenJavacCompiler.compiler = compiler;
         MavenJavacCompiler.debug = debug;
         MavenJavacCompiler.encoding = encoding;
-        MavenJavacCompiler.tc = tc;
+        MavenJavacCompiler.executable = executable;
         MavenJavacCompiler.sourceVersion = sourceVersion;
         MavenJavacCompiler.targetVersion = targetVersion;
     }
@@ -93,26 +90,6 @@ public class MavenJavacCompiler extends JRAbstractMultiClassCompiler
         // cause the mojo to return before the lookup is done possibly resulting
         // in misconfigured POMs still building.
         // ----------------------------------------------------------------------
-
-        //-----------toolchains start here ----------------------------------
-        //use the compilerId as identifier for toolchains as well.
-        Toolchain tc = getToolchain();
-        if ( tc != null ) 
-        {
-            getLog().info( "Toolchain in compiler-plugin: " + tc );
-            if ( executable  != null ) 
-            { 
-                getLog().warn( "Toolchains are ignored, 'executable' parameter is set to " + executable );
-            } 
-            else 
-            {
-                fork = true;
-                //TODO somehow shaky dependency between compilerId and tool executable.
-                executable = tc.findTool( compilerId );
-            }
-        }
-        // ----------------------------------------------------------------------
-        //
         // ----------------------------------------------------------------------
 
         List<String> classpathAsList = new ArrayList<String>(Arrays.asList(classpath.split(",")));
@@ -267,10 +244,5 @@ public class MavenJavacCompiler extends JRAbstractMultiClassCompiler
         }
         
         return null;
-    }
-
-    private static Toolchain getToolchain()
-    {
-        return tc;
     }
 }
