@@ -62,7 +62,7 @@
     <dependency>
       <groupId>net.sf.jasperreports</groupId>
       <artifactId>jasperreports</artifactId>
-      <version>6.4.1</version>
+      <version>${jasper.version}</version>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>
@@ -83,12 +83,12 @@
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-utils</artifactId>
-      <version>3.0.24</version>
+      <version>${plexus-utils.version}</version>
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-compiler-api</artifactId>
-      <version>2.8.2</version>
+      <version>${plexus.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.codehaus.plexus</groupId>
@@ -99,7 +99,7 @@
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-compiler-manager</artifactId>
-      <version>2.8.2</version>
+      <version>${plexus.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.codehaus.plexus</groupId>
@@ -110,7 +110,7 @@
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-compiler-javac</artifactId>
-      <version>2.8.2</version>
+      <version>${plexus.version}</version>
       <scope>runtime</scope>
       <exclusions>
         <exclusion>
@@ -128,7 +128,28 @@
   </dependencies>
 
   <properties>
-    <mojo.java.target>1.5</mojo.java.target>
+    <mojo.java.target>1.8</mojo.java.target>
+    <jasper.version>6.5.1</jasper.version>
+    <plexus.version>2.8.3</plexus.version>
+    <plexus-utils.version>3.1.0</plexus-utils.version>
   </properties>
-
+	<profiles>
+	  <profile>
+    <id>old</id>
+    <activation>
+      <property>
+        <name>env.TARGET_ENV</name>
+        <value>old</value>
+      </property>
+    </activation>
+    <properties>
+      <mojo.java.target>1.5</mojo.java.target>
+      <maven.compiler.source>1.5</maven.compiler.source>
+      <maven.compiler.target>1.5</maven.compiler.target>	
+      <jasper.version>6.2.2</jasper.version>
+      <plexus.version>2.8.2</plexus.version>
+      <plexus-utils.version>3.1.0</plexus-utils.version>
+    </properties>
+	  </profile>
+	</profiles>
 </project>
