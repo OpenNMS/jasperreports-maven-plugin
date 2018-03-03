@@ -13,6 +13,9 @@ script:
   - "mvn clean install"
 matrix:
   exclude:
-    - env: PROFILE=new
+    - env: TARGET_ENV=new
       jdk: openjdk6
-
+    - env: TARGET_ENV=new
+      jdk: openjdk7
+    - env: TARGET_ENV=new
+      jdk: oraclejdk7
