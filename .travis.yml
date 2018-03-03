@@ -1,6 +1,9 @@
 language: java
 dist: precise
 sudo: false
+env:
+  - TARGET_ENV=new
+  - TARGET_ENV=old
 jdk:
   - openjdk6
   - openjdk7
@@ -8,4 +11,8 @@ jdk:
   - oraclejdk8
 script:
   - "mvn clean install"
-  - "mvn clean install -Pold"
+matrix:
+  exclude:
+    - env: PROFILE=new
+      jdk: openjdk6
+
