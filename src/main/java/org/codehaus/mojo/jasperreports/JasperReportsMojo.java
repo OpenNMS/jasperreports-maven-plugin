@@ -38,8 +38,6 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.toolchain.Toolchain;
-import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.compiler.Compiler;
 import org.codehaus.plexus.compiler.manager.CompilerManager;
 import org.codehaus.plexus.compiler.manager.NoSuchCompilerException;
@@ -72,7 +70,7 @@ public class JasperReportsMojo
     extends AbstractMojo
 {
     /**
-     * @parameter expression="${project}
+     * @parameter property="project"
      */
     private MavenProject project;
     
@@ -96,7 +94,7 @@ public class JasperReportsMojo
     /**
      * This is where the .jasper files are written.
      * 
-     * @parameter expression="${project.build.outputDirectory}"
+     * @parameter property="project.build.outputDirectory"
      */
     private File outputDirectory;
 
@@ -161,7 +159,7 @@ public class JasperReportsMojo
     private String compiler;
 
     /**
-     * @parameter expression="${project.compileClasspathElements}"
+     * @parameter property="project.compileClasspathElements"
      */
     private List<String> classpathElements;
 
@@ -170,7 +168,7 @@ public class JasperReportsMojo
      * @parameter 
      * @since 1.0-beta-2
      */
-    private Map<String,String> additionalProperties = new HashMap<>();
+    private Map<String,String> additionalProperties = new HashMap<String,String>();
 
     /**
      * Any additional classpath entry you might want to add to the JasperReports compiler. Not
@@ -187,34 +185,38 @@ public class JasperReportsMojo
      */
     private CompilerManager compilerManager;
     
-    /** @component */
-    private ToolchainManager toolchainManager;
+     /**
+     * The executable of the compiler to use when fork is true.
+     *
+     * @parameter property="maven.compiler.executable"
+     */
+    private String executable;
     
     /**
      * The -source argument for the Java compiler.
      *
-     * @parameter expression="${maven.compiler.source}" default-value="1.5"
+     * @parameter property="maven.compiler.source" default-value="1.5"
      */
     protected String source;
 
     /**
      * The -target argument for the Java compiler.
      *
-     * @parameter expression="${maven.compiler.target}" default-value="1.5"
+     * @parameter property="maven.compiler.target" default-value="1.5"
      */
     protected String target;
 
     /**
      * The -encoding argument for the Java compiler.
      *
-     * @parameter expression="${encoding}" default-value="${project.build.sourceEncoding}"
+     * @parameter property="encoding" default-value="${project.build.sourceEncoding}"
      */
     private String encoding;
 
     /**
      * Set to true to include debugging information in the compiled class files.
      *
-     * @parameter expression="${maven.compiler.debug}" default-value="true"
+     * @parameter property="maven.compiler.debug" default-value="true"
      */
     private boolean debug = true;
 
@@ -292,7 +294,7 @@ public class JasperReportsMojo
                 throw new MojoExecutionException( "No such compiler '" + e.getCompilerId() + "'." );
             }
             
-            MavenJavacCompiler.init(getLog(), compilerMaven, debug, encoding, getToolchain(), source, target);
+            MavenJavacCompiler.init(getLog(), compilerMaven, debug, encoding, executable, source, target);
 
             for ( Iterator<String> i = additionalProperties.keySet().iterator(); i.hasNext(); )
             {
@@ -334,17 +336,21 @@ public class JasperReportsMojo
                     	try {
                             final String srcMd5String = getFileMd5(src);
 
-					        try(final BufferedReader br = new BufferedReader(new FileReader(md5File))) {
+                  BufferedReader br = null;
+					        try {
+                              br = new BufferedReader(new FileReader(md5File));
 	                            final String fileMd5 = br.readLine();
 
 	                            if (srcMd5String.equals(fileMd5)) {
 	                                getLog().info("Skipping report file: " + src + " (MD5 matches)");
 	                                continue;
 	                            }
-					        }
+					        } finally {
+                    if (br != null) br.close();
+                  }
 						} catch (final Exception e) {
 							getLog().warn("unable to read from " + src, e);
-						}
+						} 
                     }
                     getLog().info( "Compiling report file: " + srcName );
                     jasperCompilerManager.compileToFile( src.getAbsolutePath(), dest.getAbsolutePath() );
@@ -382,13 +388,17 @@ public class JasperReportsMojo
 	private String getFileMd5(File src) throws NoSuchAlgorithmException,
 			FileNotFoundException, IOException {
 		final MessageDigest md = MessageDigest.getInstance("MD5");
-		try(final FileInputStream sourceIs = new FileInputStream(src)) {
+    FileInputStream sourceIs = null;
+		try {
+          sourceIs = new FileInputStream(src);
 	        byte[] dataBytes = new byte[1024];
 	        int nread = 0;
 	        while ((nread = sourceIs.read(dataBytes)) != -1) {
 	          md.update(dataBytes, 0, nread);
 	        };
-		}
+		} finally {
+        if (sourceIs != null) sourceIs.close();
+    }
 		final byte[] mdbytes = md.digest();
 		final StringBuffer srcMd5 = new StringBuffer();
 		for (int i = 0; i < mdbytes.length; i++) {
@@ -490,7 +500,7 @@ public class JasperReportsMojo
     private ClassLoader getClassLoader( ClassLoader classLoader )
         throws MojoExecutionException
     {
-        List<URL> classpathURLs = new ArrayList<>();
+        List<URL> classpathURLs = new ArrayList<URL>();
 
         for ( int i = 0; i < classpathElements.size(); i++ )
         {
@@ -531,18 +541,6 @@ public class JasperReportsMojo
 
         URL[] urls = (URL[]) classpathURLs.toArray( new URL[classpathURLs.size()] );
         return new URLClassLoader( urls, classLoader );
-    }
-    
-    //TODO remove the part with ToolchainManager lookup once we depend on
-    //3.0.9 (have it as prerequisite). Define as regular component field then.
-    private Toolchain getToolchain()
-    {
-        Toolchain tc = null;
-        if ( toolchainManager != null )
-        {
-            tc = toolchainManager.getToolchainFromBuildContext( "jdk", session );
-        }
-        return tc;
     }
 
 }
