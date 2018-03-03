@@ -1,0 +1,14 @@
+language: java
+dist: precise
+sudo: false
+jdk:
+  - openjdk5
+  - openjdk6
+  - openjdk7
+  - openjdk8
+  - oraclejdk8
+  - openjdk9
+  - oraclejdk9
+script:
+  - "mvn clean install"
+ 
