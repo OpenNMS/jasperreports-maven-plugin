@@ -11,7 +11,7 @@
 
   <groupId>org.codehaus.mojo</groupId>
   <artifactId>jasperreports-maven-plugin</artifactId>
-  <version>1.0-beta-4-OPENNMS-SNAPSHOT</version>
+  <version>1.0-beta-5-OPENNMS-SNAPSHOT</version>
 
   <packaging>maven-plugin</packaging>
 
@@ -70,11 +70,6 @@
       <groupId>net.sf.jasperreports</groupId>
       <artifactId>jasperreports</artifactId>
       <version>${jasper.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
