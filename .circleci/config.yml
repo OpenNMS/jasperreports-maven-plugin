@@ -65,7 +65,7 @@ jobs:
       - run:
           name: Check releasability
           command: |
-            curl -sSF -L -O https://raw.githubusercontent.com/OpenNMS/opennms-repo/master/script/release-lint.sh
+            curl -s -S -L -O https://raw.githubusercontent.com/OpenNMS/opennms-repo/master/script/release-lint.sh
             chmod 755 release-lint.sh
             if [ -z "${CIRCLE_TAG}" ]; then
               ./release-lint.sh -w
