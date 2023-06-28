@@ -1,0 +1,90 @@
+version: 2.1
+
+executors:
+  build-executor:
+    docker:
+      - image: cimg/openjdk:8.0
+        environment:
+          MAVEN_OPTS: -Xmx1g
+
+orbs:
+  cloudsmith: cloudsmith/cloudsmith@1.0.5
+  sign-packages: opennms/sign-packages@2.3.0
+  branch-management: opennms/branch-management@2.3.0
+
+
+commands:
+  shallow-clone:
+      description: "Quick shallow checkout (if possible)"
+      steps:
+        - run:
+            name: git clone
+            command: |
+              install -d -m 700 ~/.ssh
+              ssh-keyscan github.com >> ~/.ssh/known_hosts
+              ssh-keyscan -p 443 ssh.github.com >> ~/.ssh/known_hosts
+              chmod 600 ~/.ssh/known_hosts
+              git clone --no-checkout --filter=tree:0 "${CIRCLE_REPOSITORY_URL}" .
+              if [ -n "${CIRCLE_TAG}" ]; then
+                git checkout --force "${CIRCLE_TAG}"
+                git reset --hard "${CIRCLE_SHA1}"
+              else
+                git checkout --force -B "${CIRCLE_BRANCH}" "${CIRCLE_SHA1}"
+              fi
+  build:
+    description: "Build and Test Jasperreports Maven Plugin"
+    steps:
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "pom.xml" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - run:
+          name: Compile Plugin
+          command: |
+            mvn install
+      - store_artifacts:
+          path: target/*.jar
+          destination: jars
+
+workflows:
+  build-deploy:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only:
+                - /^v.*/
+
+
+jobs:
+  build:
+    executor: build-executor
+    steps:
+      - shallow-clone
+      - run:
+          name: Check releasability
+          command: |
+            curl -sSF -L -O https://raw.githubusercontent.com/OpenNMS/opennms-repo/master/script/release-lint.sh
+            chmod 755 release-lint.sh
+            if [ -z "${CIRCLE_TAG}" ]; then
+              ./release-lint.sh -w
+            else
+              ./release-lint.sh
+            fi
+      - build
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "pom.xml" }}
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/junit/
+            find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/junit/ \;
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
+          when: always
+
+      - store_test_results:
+          path: ~/junit
+
