@@ -132,7 +132,7 @@
   <properties>
     <mojo.java.target>1.8</mojo.java.target>
     <jasper.version>6.21.0</jasper.version>
-    <plexus.version>2.14.0</plexus.version>
+    <plexus.version>2.14.1</plexus.version>
     <plexus-utils.version>4.0.0</plexus-utils.version>
   </properties>
 
