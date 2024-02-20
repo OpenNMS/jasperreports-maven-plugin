@@ -4,8 +4,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <artifactId>mojo-parent</artifactId>
     <groupId>org.codehaus.mojo</groupId>
+    <artifactId>mojo-parent</artifactId>
     <version>78</version>
   </parent>
 
@@ -27,10 +27,18 @@
     </license>
   </licenses>
 
+  <developers>
+    <developer>
+      <id>gjoseph</id>
+      <email>gjoseph_AT_codehaus_DOT_org</email>
+      <url>http://incongru.net</url>
+      <timezone>CET</timezone>
+    </developer>
+  </developers>
+
   <prerequisites>
     <maven>3.3.3</maven>
   </prerequisites>
-  
 
   <scm>
     <connection>scm:git:https://github.com/OpenNMS/jasperreports-maven-plugin.git</connection>
@@ -38,32 +46,12 @@
     <url>https://github.com/OpenNMS/jasperreports-maven-plugin</url>
   </scm>
 
-
-  <developers>
-    <developer>
-      <id>gjoseph</id>
-      <email>gjoseph_AT_codehaus_DOT_org</email>
-      <timezone>CET</timezone>
-      <url>http://incongru.net</url>
-    </developer>
-  </developers>
-
-  <build>
-    <plugins>
-      <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-source-plugin</artifactId>
-      <executions>
-        <execution>
-          <id>attach-sources</id>
-          <goals>
-            <goal>jar</goal>
-          </goals>
-        </execution>
-      </executions>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <mojo.java.target>8</mojo.java.target>
+    <jasper.version>6.21.2</jasper.version>
+    <plexus.version>2.14.2</plexus.version>
+    <plexus-utils.version>4.0.0</plexus-utils.version>
+  </properties>
 
   <dependencies>
     <dependency>
@@ -129,12 +117,22 @@
     </dependency>
   </dependencies>
 
-  <properties>
-    <mojo.java.target>8</mojo.java.target>
-    <jasper.version>6.21.2</jasper.version>
-    <plexus.version>2.14.2</plexus.version>
-    <plexus-utils.version>4.0.0</plexus-utils.version>
-  </properties>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
   <profiles>
     <profile>
