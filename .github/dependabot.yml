@@ -5,7 +5,7 @@ updates:
     directory: "/"
     target-branch: "master"
     reviewers:
-      - "opennms/dependabot-reviewers-maven"
+      - "OpenNMS/dependabot-reviewers-maven"
     labels:
       - "dependency update"
     commit-message:
