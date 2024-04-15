@@ -50,7 +50,7 @@
     <mojo.java.target>8</mojo.java.target>
     <jasper.version>6.21.2</jasper.version>
     <plexus.version>2.15.0</plexus.version>
-    <plexus-utils.version>4.0.0</plexus-utils.version>
+    <plexus-utils.version>4.0.1</plexus-utils.version>
   </properties>
 
   <dependencies>
